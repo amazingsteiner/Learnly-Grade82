@@ -1,13 +1,21 @@
-# Learnly — Grade 8 Mathematics
+# Learnly Grade 8 — Kivy Android Build
 
-Combined Learnly PySide6 foundation + real learning engines, adapted to Grade 8 Mathematics.
+A Kivy/Buildozer Android version of Learnly, based on the supplied Learnly Grade 8 development brief.
 
-## Automated APK
+## Current build
+- Student-code login with local JSON profile
+- Grade 8 curriculum layer
+- Learn modules loaded from JSON
+- Topic/difficulty practice generator
+- Hints, explanations, XP and mastery
+- Paper generator + memo viewer
+- Data Handling statistics lab
+- Responsive portrait Kivy UI
+- GitHub Actions workflow that builds a debug APK
 
-GitHub Actions builds `Learnly-Grade8.apk` for Android ARM64 on every push to `main`, or manually from Actions → Build Learnly-Grade8.apk → Run workflow.
+## Android build
+Push this repository to GitHub. Then open **Actions → Build Learnly Grade 8 APK → Run workflow**.
+The generated APK is uploaded as an Actions artifact named `Learnly-Grade8-APK`.
 
-The workflow follows the official Qt for Python `pyside6-android-deploy` route. The generated artifact is a debug APK for direct Android installation/testing.
-
-## Source basis
-
-The Grade 8 curriculum and project direction are based on the supplied Learnly handover and Grade 8 prototype material. Verify current DBE CAPS/ATP wording before educational release.
+## Important
+The supplied brief states that exact CAPS/ATP wording should be verified before production release. This project preserves that caveat and does not claim independent curriculum verification.
