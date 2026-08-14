@@ -1,0 +1,1124 @@
+LEARNLY — CLAUDE HANDOVER / CURRENT DEVELOPMENT BRIEF
+==========================================================
+
+PROJECT
+-------
+Name: Learnly
+Original ecosystem: The Elites Academy
+Platform: Python + PySide6
+Primary development environment: Pydroid 3 / Android
+Current target curriculum: GRADE 8 MATHEMATICS
+Curriculum context: South African / CAPS-aligned
+
+IMPORTANT
+---------
+The existing Learnly application was originally structured around Grade 11.
+DO NOT rebuild the entire project from scratch.
+
+Use the CURRENT WORKING GRADE 11 LEARNLY PROJECT as the application foundation,
+then add/replace curriculum-dependent files so that Grade 8 becomes the active
+curriculum.
+
+A separate Grade 8 prototype file, elitelearn_grade8.py, already contains useful
+Grade 8 curriculum, notes, question generators, adaptive logic and a working
+paper-generation architecture. Use it as a source for Grade 8 functionality,
+but integrate those capabilities into the modular Learnly project rather than
+turning Learnly back into a single huge Python file.
+
+==========================================================
+1. CURRENT PROJECT STATUS
+==========================================================
+
+The following are already working or substantially implemented:
+
+- PySide6 application
+- Student-code login
+- Automatic creation of student profile when code is not found
+- Student JSON storage
+- Project-relative data folders
+- Theme manager
+- Home screen
+- Learn screen
+- Practice screen / RealPracticeScreen
+- Papers screen
+- Profile
+- Settings
+- Tutor mode
+- Global UI styling
+- Student mastery/history/XP structure
+- Adaptive-learning architecture
+- Multi-file engine architecture
+- Content-folder architecture
+- Export/import concept
+- Timestamped student data concept
+- Five requested themes:
+    1. Classic Elite
+    2. Midnight
+    3. Academic
+    4. Neon
+    5. Glass
+
+Tutor/access code prototype:
+    children of the sun
+
+Student identity:
+    student code
+
+==========================================================
+2. MAJOR PROBLEMS CURRENTLY OBSERVED
+==========================================================
+
+A. PRACTICE TOPIC SELECTION IS MISSING / INCOMPLETE
+----------------------------------------------------
+Current Practice does not properly allow the student to choose exactly what
+topic they want to practise.
+
+Required:
+
+Practice should open with a clear topic/mode selection screen.
+
+Modes:
+
+1. Choose Topic
+2. Daily Practice
+3. Recommended Practice
+4. Weakness Practice
+5. Strength Challenge
+6. Mixed Practice
+7. Speed Practice
+8. Mental Maths
+
+For "Choose Topic", show all Grade 8 topics and allow the learner to select
+one or multiple topics.
+
+Example:
+
+PRACTICE
+--------
+Choose what you want to practise:
+
+[ Whole Numbers ]
+[ Integers ]
+[ Exponents ]
+[ Numeric Patterns ]
+[ Algebraic Expressions ]
+[ Algebraic Equations ]
+[ Geometry of Straight Lines ]
+[ Pythagoras ]
+[ Area & Perimeter ]
+[ Financial Mathematics ]
+[ Transformations ]
+[ Data Handling ]
+[ Probability ]
+
+Then:
+
+Difficulty:
+[ Foundation ] [ Standard ] [ Advanced ] [ Elite ]
+
+Questions:
+[ 5 ] [ 10 ] [ 15 ] [ 20 ]
+
+Optional:
+[ ] Timed
+[ ] Hints
+[ ] Show solution after answer
+
+==========================================================
+3. GRADE 8 CURRICULUM
+==========================================================
+
+Use the Grade 8 prototype as the curriculum source.
+
+Known Grade 8 curriculum structure in elitelearn_grade8.py:
+
+TERM 1
+------
+- Whole Numbers
+    - Properties & operations
+    - Prime factors
+    - LCM & HCF
+
+- Integers
+    - Operations with integers
+    - Order of operations
+
+- Exponents
+    - Exponent laws
+    - Squares & cubes
+
+- Numeric Patterns
+    - Sequences
+    - Rules & next term
+
+TERM 2
+------
+- Algebraic Expressions
+    - Simplifying
+    - Substitution
+
+- Algebraic Equations
+    - Solving linear equations
+
+- Geometry of Straight Lines
+    - Angles on a line
+    - Vertically opposite angles
+
+TERM 3
+------
+- Theorem of Pythagoras
+    - Finding the hypotenuse
+    - Finding a missing side
+
+- Area & Perimeter
+    - Rectangles & triangles
+    - Circles
+
+- Financial Mathematics
+    - Simple interest
+    - Profit & loss
+
+- Transformation Geometry
+    - Translations
+    - Reflections
+
+TERM 4
+------
+- Data Handling
+    - Mean
+    - Median
+    - Mode
+    - Range
+
+- Probability
+    - Sample space
+    - Simple probability
+
+NOTE:
+The prototype itself says the CAPS wording should be verified against the
+current DBE Senior Phase CAPS/ATP before final release. Do not claim verified
+official wording unless it has actually been verified.
+
+==========================================================
+4. NOTES ARE CURRENTLY TOO SHALLOW
+==========================================================
+
+The current Learn screen has insufficient notes.
+
+Do NOT use short placeholder messages such as:
+
+"Future module: step-by-step guide..."
+
+Every Grade 8 topic needs a real learning module.
+
+Each topic should contain:
+
+1. What is the topic?
+2. Why does it matter?
+3. Key vocabulary
+4. Core concept
+5. Rules
+6. Formulae
+7. Step-by-step method
+8. Worked example
+9. Second worked example
+10. Fast method
+11. Why the fast method works
+12. Common mistakes
+13. Memory trick
+14. Visual explanation where useful
+15. Guided example
+16. Practice questions
+17. Challenge question
+18. Quick test
+19. Mastery check
+
+Content should be externalised into JSON/TXT files where practical.
+
+Suggested:
+
+content/
+    grade8/
+        curriculum.json
+        topics/
+            whole_numbers.json
+            integers.json
+            exponents.json
+            patterns.json
+            algebraic_expressions.json
+            algebraic_equations.json
+            geometry_straight_lines.json
+            pythagoras.json
+            area_perimeter.json
+            financial_maths.json
+            transformations.json
+            data_handling.json
+            probability.json
+        guides/
+        tips/
+        techniques/
+        terms/
+
+The UI should read these files rather than hardcoding all notes into screens.
+
+==========================================================
+5. BUILT-IN MATHEMATICAL VISUALISATION IS MISSING
+==========================================================
+
+A major requirement is that Learnly must NOT depend on manually supplied images
+for mathematics.
+
+Create built-in drawing/visual engines.
+
+Required geometry capabilities:
+
+- Point
+- Line
+- Line segment
+- Ray
+- Angles
+- Triangle
+- Right triangle
+- Rectangle
+- Square
+- Parallelogram
+- Trapezium
+- Circle
+- Arc
+- Chord
+- Tangent
+- Secant
+- Polygon
+- Coordinate grid
+- Coordinate axes
+- Vectors where appropriate
+- Transformations
+
+Geometry questions should be able to generate diagrams dynamically.
+
+Examples:
+
+draw_triangle(...)
+draw_angle(...)
+draw_circle(...)
+draw_line(...)
+draw_grid(...)
+draw_coordinate_plane(...)
+
+Required future interactive features:
+
+- Drag points
+- Change dimensions
+- Show/hide measurements
+- Labels
+- Highlight relevant angles/sides
+- Rotate shapes
+- Transformation animation
+- "Find x" diagrams
+- Area/perimeter diagrams
+- Pythagoras diagrams
+- Transformation diagrams
+- Coordinate geometry diagrams
+
+Keep the implementation lightweight enough for Pydroid/Android.
+
+==========================================================
+6. DATA HANDLING TABLES ARE MISSING
+==========================================================
+
+Create a real Data Handling Lab.
+
+Required:
+
+- Raw data tables
+- Frequency tables
+- Grouped data
+- Class intervals
+- Cumulative frequency
+- Mean
+- Median
+- Mode
+- Range
+- Quartiles where appropriate
+- Five-number summary
+- Outlier identification where appropriate
+
+Interactive capabilities:
+
+- Enter values
+- Edit values
+- Sort values
+- Generate random datasets
+- Calculate statistics
+- Highlight median
+- Highlight mode
+- Calculate frequency
+- Generate questions from a table
+- Show working
+
+Visualisations:
+
+- Bar graph
+- Histogram
+- Pie chart
+- Line graph
+- Scatter plot
+- Box-and-whisker plot
+
+Graphs should preferably be generated programmatically.
+
+==========================================================
+7. PROBABILITY LAB IS MISSING / INCOMPLETE
+==========================================================
+
+Create an interactive Probability Lab.
+
+Required:
+
+- Sample-space tables
+- Tree diagrams
+- Venn diagrams where appropriate
+- Two-way tables
+- Dice simulation
+- Coin simulation
+- Spinner simulation
+- Cards simulation
+- Experimental probability
+- Theoretical probability
+- Complement
+- Independent/dependent events where appropriate for Grade 8
+
+Show:
+
+THEORETICAL PROBABILITY
+versus
+EXPERIMENTAL PROBABILITY
+
+Allow the student to run repeated simulations and see how experimental
+probability approaches theoretical probability.
+
+==========================================================
+8. TIMER SYSTEM
+==========================================================
+
+Timer support must be integrated into Practice.
+
+Modes:
+
+- Countdown
+- Stopwatch
+- Timed question
+- Speed challenge
+- Exam timer
+- Mental Maths timer
+- Study-session timer
+
+Required controls:
+
+START
+PAUSE
+RESUME
+RESET
+
+Record time taken for questions where appropriate.
+
+Use time data in adaptive recommendations.
+
+==========================================================
+9. MENTAL MATHS
+==========================================================
+
+Include a dedicated Mental Maths mode.
+
+Skills should include:
+
+ADDITION
+- Make round numbers
+- Compensation
+- Friendly chunks
+- Left-to-right addition
+
+SUBTRACTION
+- Round and compensate
+- Count up
+- Break into hundreds/tens/ones
+
+MULTIPLICATION
+- x10, x100, x1000
+- x5 = x10 / 2
+- x25 = x100 / 4
+- x50 = x100 / 2
+- x9 = x10 - original
+- x11 patterns
+- Near-100 multiplication
+- Doubling and halving
+- Distributive method
+
+DIVISION
+- /5 = x2 /10
+- /25 = x4 /100
+- Factor division
+- Known multiplication facts
+
+PERCENTAGES
+- 10%
+- 5%
+- 1%
+- 50%
+- 25%
+- Build unusual percentages from easy percentages
+
+FRACTIONS
+- Unit fractions
+- Simplify early
+- Common denominator
+- Fraction/decimal/percentage conversion
+
+EXPONENTS
+- Same-base multiplication: add exponents
+- Same-base division: subtract exponents
+- Power of a power: multiply exponents
+- Zero exponent
+- Negative exponent concept where curriculum appropriate
+- Recognising powers
+- Scientific notation where appropriate
+- Comparing exponential growth
+
+Each technique should show:
+
+FAST METHOD
+WHY IT WORKS
+WHEN TO USE IT
+EXAMPLE
+COMMON TRAP
+
+Mental Maths should track:
+
+- Time
+- Accuracy
+- Speed
+- Personal best
+- Streak
+- Difficulty
+
+==========================================================
+10. STEP-BY-STEP GUIDE
+==========================================================
+
+Every major topic needs a Guide.
+
+Standard guide structure:
+
+STEP 1 — Understand the concept
+STEP 2 — Identify what is known
+STEP 3 — Identify what is required
+STEP 4 — Choose the method/formula
+STEP 5 — Substitute
+STEP 6 — Calculate
+STEP 7 — Check
+STEP 8 — Try a similar question
+STEP 9 — Try a faster method
+STEP 10 — Independent challenge
+
+Guides should support:
+
+- Text
+- Formula
+- Diagram
+- Table
+- Worked example
+- Interactive step
+- Hint
+
+==========================================================
+11. PAPER GENERATOR CURRENTLY NOT WORKING
+==========================================================
+
+This is a HIGH PRIORITY BUG.
+
+The Grade 8 prototype contains a useful PaperGenerator architecture.
+
+It generates:
+
+- Grade 8 Mathematics
+- Term
+- Time
+- Marks
+- Numbered questions
+- Decimal sub-numbering
+- Topic sections
+- Marks per question
+- Marks summary
+- Memo
+
+Learnly's paper system must actually work from the UI.
+
+Required paper-generation flow:
+
+PAPERS
+  ↓
+CREATE PAPER
+  ↓
+Choose:
+    Grade: 8
+    Term: 1/2/3/4
+    Paper type
+    Topics
+    Difficulty
+    Number of questions
+    Total marks
+    Time
+  ↓
+GENERATE
+  ↓
+SAVE
+  ↓
+VIEW PAPER
+  ↓
+VIEW MEMO
+  ↓
+EXPORT
+
+Paper types:
+
+- Term / ATP aligned
+- Weakness Recovery
+- Strength Challenge
+- Diagnostic
+- Mock Exam
+- Custom Topic Paper
+
+Student-specific paper:
+
+- Use student's weaknesses
+- Use student's strengths
+- Use mastery
+- Use current term
+- Avoid overusing questions already attempted
+
+Generated papers must have:
+
+paper_id
+grade
+subject
+term
+type
+marks
+created_at
+student_code
+difficulty
+topics
+
+Save under:
+
+ROOT / "data" / "papers"
+
+NOT a hardcoded Android-specific path.
+
+Every generated paper must be viewable inside Learnly.
+
+==========================================================
+12. PAPER VIEWER
+==========================================================
+
+Create a real paper viewer.
+
+Display:
+
+- Paper title
+- Student
+- Grade
+- Term
+- Date
+- Marks
+- Time
+- Instructions
+- Questions
+- Topic
+- Mark allocation
+
+Buttons:
+
+VIEW MEMO
+EXPORT
+BACK
+
+Memo:
+
+- Question
+- Answer
+- Working
+- Explanation
+- Technique
+- Common mistake
+
+==========================================================
+13. UI PROBLEMS
+==========================================================
+
+Current UI has serious usability problems.
+
+Observed:
+
+- Some text is too small.
+- Some buttons are too large.
+- Some buttons are disproportionate.
+- Some controls go outside the visible Android/Pydroid screen.
+- Screens are not consistently responsive.
+- The app does not yet feel like a polished educational application.
+
+Do NOT simply increase every font/button size globally.
+
+The UI needs responsive sizing.
+
+Target:
+
+- Comfortable body text
+- Larger headings
+- Medium buttons
+- Compact secondary controls
+- Scrollable content
+- No horizontal overflow
+- No buttons cut off
+- No giant button grids
+- Consistent margins
+- Touch-friendly controls
+- Clear hierarchy
+
+Suggested baseline:
+
+Body:
+    ~16 px
+
+Small secondary:
+    ~14 px
+
+Heading:
+    ~22 px
+
+Page title:
+    ~28 px
+
+Primary action:
+    ~50–58 px height
+
+Secondary action:
+    ~42–48 px height
+
+Avoid excessive 64+ px buttons unless they are major actions.
+
+Use:
+
+QScrollArea
+QSizePolicy
+layout stretch factors
+responsive grids
+minimum/maximum widths
+
+Long questions should wrap.
+
+Long topic lists should scroll.
+
+==========================================================
+14. GLOBAL UI SYSTEM
+==========================================================
+
+The existing global UI styling idea should be retained but improved.
+
+Five themes:
+
+1. Classic Elite
+2. Midnight
+3. Academic
+4. Neon
+5. Glass
+
+Settings should allow theme selection.
+
+Settings should also include:
+
+- Font size
+- Sound
+- Animations
+- Hints
+- Difficulty preference
+- Timer preferences
+- Daily goal
+- Auto-show explanations
+- Confirm before reset
+- Student data export
+- Student data import
+- Reset local data
+- Curriculum information
+- About Learnly
+
+Font size should ideally have:
+
+Small
+Normal
+Large
+Extra Large
+
+But the default should be readable on a phone/tablet.
+
+==========================================================
+15. ADAPTIVE / "AI-LIKE" BEHAVIOUR
+==========================================================
+
+No online AI API is required.
+
+Use deterministic local logic.
+
+Examples:
+
+IF mastery < 40:
+    recommend foundation guide
+
+IF mastery 40–60:
+    recommend guided practice
+
+IF mastery 60–75:
+    recommend standard practice
+
+IF mastery 75–90:
+    recommend advanced practice
+
+IF mastery > 90:
+    recommend elite challenge
+
+IF repeated mistakes:
+    recommend explanation + worked example
+
+IF accuracy high but speed low:
+    recommend speed drill
+
+IF speed high but accuracy low:
+    recommend slower conceptual practice
+
+IF student repeatedly requests hints:
+    recommend Guide
+
+IF strong:
+    increase difficulty
+
+==========================================================
+16. STUDENT DATA
+==========================================================
+
+Keep separate JSON per student.
+
+Example:
+
+data/
+    students/
+        S01.json
+        S02.json
+
+Student profile should contain:
+
+- code
+- name
+- grade = 8
+- subject = Mathematics
+- term
+- daily_goal
+- today_done
+- streak
+- XP
+- level
+- mastery
+- strengths
+- weaknesses
+- mistakes
+- question history
+- practice history
+- paper history
+- settings
+- created_at
+- updated_at
+- schema_version
+
+IMPORTANT:
+Do not destroy existing student data when changing the curriculum.
+
+Create migration logic.
+
+==========================================================
+17. GRADE CONVERSION STRATEGY
+==========================================================
+
+DO NOT blindly replace every "11" with "8".
+
+Instead:
+
+- Keep current working Learnly application structure.
+- Add a Grade 8 curriculum layer.
+- Add grade8 content files.
+- Add a GradeManager/CurriculumManager.
+- Change the default active curriculum to Grade 8.
+- Make engines read the selected curriculum.
+- Preserve existing UI architecture.
+- Preserve student data where possible.
+- Preserve reusable engine infrastructure.
+
+Architecture:
+
+Student
+   ↓
+GradeManager
+   ↓
+Grade 8 Curriculum
+   ↓
+Content + Question Engine
+   ↓
+Practice / Learn / Papers / Labs
+
+Future goal:
+
+Grade 8
+Grade 9
+Grade 10
+Grade 11
+Grade 12
+
+can all use the same application architecture.
+
+==========================================================
+18. IMPORTANT GRADE 8 SOURCE
+==========================================================
+
+elitelearn_grade8.py already provides useful source material.
+
+It contains:
+
+- Grade 8 curriculum
+- Grade 8 notes
+- Question model
+- Question generators
+- Adaptive engine
+- Mastery
+- Progress store
+- Paper generator
+- HTML paper rendering
+- PDF export attempt
+- Grade 8 UI structure
+- Gamification
+- Bottom navigation concept
+
+Relevant curriculum in that file includes:
+
+whole_numbers
+integers
+exponents_g8
+patterns_g8
+algebraic_expressions
+algebraic_equations
+geometry_straight_lines
+theorem_pythagoras
+area_perimeter
+financial_maths_g8
+transformations
+data_handling_g8
+probability_g8
+
+Use those implementations as a source when integrating Grade 8 functionality.
+
+==========================================================
+19. CURRENT LEARNLY ARCHITECTURE
+==========================================================
+
+Target structure:
+
+Learnly/
+│
+├── main.py
+│
+├── engine/
+│   ├── app.py
+│   ├── learning_engine.py
+│   ├── question_engine.py
+│   ├── adaptive_engine.py
+│   ├── paper_engine.py
+│   ├── geometry_engine.py
+│   ├── data_engine.py
+│   ├── probability_engine.py
+│   ├── timer_engine.py
+│   └── grade_manager.py
+│
+├── screens/
+│   ├── login.py
+│   ├── home.py
+│   ├── learn.py
+│   ├── practice.py
+│   ├── papers.py
+│   ├── profile.py
+│   ├── settings.py
+│   ├── tutor.py
+│   ├── guide.py
+│   ├── geometry_lab.py
+│   ├── data_lab.py
+│   └── probability_lab.py
+│
+├── ui/
+│   ├── theme_manager.py
+│   └── widgets.py
+│
+├── content/
+│   └── grade8/
+│       ├── curriculum.json
+│       ├── topics/
+│       ├── guides/
+│       ├── techniques/
+│       ├── tips/
+│       └── terms/
+│
+└── data/
+    ├── students/
+    ├── papers/
+    └── exports/
+
+==========================================================
+20. PRIORITY ORDER
+==========================================================
+
+PRIORITY 1 — FIX UI
+-------------------
+Make every screen usable on Android/Pydroid.
+
+No overflow.
+No tiny text.
+No giant buttons.
+No controls cut off.
+
+PRIORITY 2 — GRADE 8 CONVERSION
+--------------------------------
+Make Grade 8 the active curriculum everywhere.
+
+PRIORITY 3 — PRACTICE TOPIC SELECTION
+--------------------------------------
+Student must explicitly choose topic/mode.
+
+PRIORITY 4 — REAL NOTES
+------------------------
+Replace placeholders with deep Grade 8 learning content.
+
+PRIORITY 5 — PAPER GENERATOR
+-----------------------------
+Make generation, saving, viewing and memo work end-to-end.
+
+PRIORITY 6 — VISUAL MATH
+-------------------------
+Implement geometry drawer and diagrams.
+
+PRIORITY 7 — DATA LAB
+----------------------
+Tables + statistics + graphs.
+
+PRIORITY 8 — PROBABILITY LAB
+-----------------------------
+Interactive simulations and visualisations.
+
+PRIORITY 9 — ADAPTIVE SYSTEM
+-----------------------------
+Connect practice results to mastery and recommendations.
+
+PRIORITY 10 — POLISH
+---------------------
+Animations, badges, sounds, celebrations and AI-like recommendations.
+
+==========================================================
+21. IMPORTANT DEVELOPMENT RULE
+==========================================================
+
+Do not respond to a missing feature by adding another placeholder.
+
+If a screen says:
+
+"Future module..."
+"Engine ready to connect..."
+"Coming soon..."
+
+replace it with a functional implementation whenever that feature is requested.
+
+Do not break existing working functionality while adding new functionality.
+
+Prefer modular files and reusable engines.
+
+Do not hardcode curriculum into app.py.
+
+Do not hardcode Android storage paths.
+
+Use project-relative paths:
+
+ROOT / "data" / "students"
+ROOT / "data" / "papers"
+ROOT / "data" / "exports"
+
+==========================================================
+22. SUCCESS CRITERIA
+==========================================================
+
+A successful Learnly Grade 8 build should allow a student to:
+
+1. Log in using student code.
+2. See a Grade 8 dashboard.
+3. Select Learn.
+4. Choose any Grade 8 topic.
+5. Read substantial notes.
+6. Follow a step-by-step guide.
+7. See worked examples.
+8. Learn shortcuts and tips.
+9. Practise a chosen topic.
+10. Choose difficulty.
+11. Use hints.
+12. Use a countdown timer.
+13. Complete mental maths.
+14. See mastery change.
+15. See weaknesses and strengths.
+16. Open geometry diagrams.
+17. Work with data tables.
+18. View graphs.
+19. Run probability simulations.
+20. Generate a question paper.
+21. Select term.
+22. Select topics.
+23. Generate a weakness paper.
+24. Generate a strength paper.
+25. View the generated paper inside the app.
+26. View the memo.
+27. Export the paper.
+28. Track paper history.
+29. Change UI theme.
+30. Change font-size preference.
+31. Export student data.
+32. Import student data on another device.
+33. Prevent older data from overwriting newer records.
+34. Enter Tutor Mode using the access code.
+
+==========================================================
+23. FINAL DIRECTION FOR CLAUDE
+==========================================================
+
+Transform the existing working Learnly project into a genuine Grade 8
+Mathematics learning platform.
+
+Do not merely relabel Grade 11 as Grade 8.
+
+Integrate the Grade 8 curriculum and question-generation logic from
+elitelearn_grade8.py into the modular Learnly architecture.
+
+The most important immediate fixes are:
+
+1. Practice topic selection
+2. Deep Grade 8 notes
+3. Geometry/shape engine
+4. Data tables and graphs
+5. Probability tools
+6. Working paper generator
+7. Paper viewer + memo
+8. Responsive Android UI
+9. Grade 8 curriculum integration
+10. Adaptive recommendations
+
+The final product should feel like an actual Elites Academy learning system,
+not a prototype with placeholder screens.
