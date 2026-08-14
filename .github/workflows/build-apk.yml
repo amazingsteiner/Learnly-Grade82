@@ -1,0 +1,71 @@
+name: Build Learnly-Grade8.apk
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git unzip zip wget curl build-essential autoconf automake libtool pkg-config libffi-dev libssl-dev
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install 'PySide6==6.10.0'
+
+      - name: Download Android SDK and NDK required by Qt for Python
+        run: |
+          git clone --depth 1 --branch 6.10 https://code.qt.io/pyside/pyside-setup.git "$RUNNER_TEMP/pyside-setup"
+          python "$RUNNER_TEMP/pyside-setup/tools/cross_compile_android/main.py" --download-only --skip-update --auto-accept-license
+
+      - name: Download PySide6 Android wheels
+        run: |
+          mkdir -p "$RUNNER_TEMP/android-wheels"
+          qtpip download PySide6 --android --arch aarch64 -d "$RUNNER_TEMP/android-wheels"
+          qtpip download Shiboken6 --android --arch aarch64 -d "$RUNNER_TEMP/android-wheels"
+          find "$RUNNER_TEMP/android-wheels" -maxdepth 1 -type f -name '*.whl' -print
+
+      - name: Build APK
+        run: |
+          PYSIDE=$(find "$RUNNER_TEMP/android-wheels" -maxdepth 1 -type f -name 'PySide6-*.whl' | head -n1)
+          SHIBOKEN=$(find "$RUNNER_TEMP/android-wheels" -maxdepth 1 -type f -iname 'shiboken6-*.whl' | head -n1)
+          test -n "$PYSIDE"
+          test -n "$SHIBOKEN"
+          pyside6-android-deploy --name 'Learnly-Grade8' --wheel-pyside="$PYSIDE" --wheel-shiboken="$SHIBOKEN" --arch=aarch64 --force
+
+      - name: Locate APK
+        shell: bash
+        run: |
+          mkdir -p dist
+          APK=$(find . -type f -name '*.apk' -print | head -n1)
+          if [ -z "$APK" ]; then
+            echo 'APK was not produced.'
+            find . -maxdepth 6 -type f | sort | tail -300
+            exit 1
+          fi
+          cp "$APK" dist/Learnly-Grade8.apk
+          sha256sum dist/Learnly-Grade8.apk | tee dist/Learnly-Grade8.apk.sha256
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Learnly-Grade8
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
