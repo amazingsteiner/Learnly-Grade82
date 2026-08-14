@@ -1,15 +1,11 @@
 name: Build Learnly-Grade8.apk
 
 on:
-  workflow_dispatch:
-
   push:
     branches:
       - main
 
-concurrency:
-  group: learnly-grade8-apk
-  cancel-in-progress: true
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -66,10 +62,9 @@ jobs:
             wheel
 
           python -m pip install \
-            "GitPython>=3.1.40"
-
-          python -m pip install \
-            "PySide6==6.10.0"
+            "GitPython>=3.1.40" \
+            "PySide6==6.10.0" \
+            tqdm
 
 
       - name: Verify dependencies
@@ -79,9 +74,11 @@ jobs:
 
           import git
           import PySide6
+          import tqdm
 
           print("GitPython:", git.__version__)
           print("PySide6:", PySide6.__version__)
+          print("tqdm:", tqdm.__version__)
 
           PY
 
@@ -123,8 +120,6 @@ jobs:
             --arch aarch64 \
             -d "$RUNNER_TEMP/android-wheels"
 
-          echo ""
-          echo "Downloaded wheels:"
           ls -lh "$RUNNER_TEMP/android-wheels"
 
 
@@ -146,55 +141,26 @@ jobs:
             | head -1)
 
           if [ -z "$PYSIDE" ]; then
-
             echo "ERROR: PySide6 Android wheel missing."
-
             exit 1
-
           fi
-
 
           if [ -z "$SHIBOKEN" ]; then
-
             echo "ERROR: Shiboken6 Android wheel missing."
-
             exit 1
-
           fi
 
-
-          echo "PySide6:"
-          echo "$PYSIDE"
-
-          echo "Shiboken6:"
-          echo "$SHIBOKEN"
-
-
           echo "pyside=$PYSIDE" >> "$GITHUB_OUTPUT"
-
           echo "shiboken=$SHIBOKEN" >> "$GITHUB_OUTPUT"
 
 
       - name: Check Learnly files
         run: |
 
-          echo "Checking project..."
-
           test -f main.py
-
           test -f pysidedeploy.spec
 
-          echo ""
-          echo "main.py:"
-          ls -lh main.py
-
-          echo ""
-          echo "Project:"
-          find . \
-            -maxdepth 3 \
-            -type f \
-            | sort \
-            | head -200
+          echo "Learnly project verified."
 
 
       - name: Build Learnly APK
@@ -212,8 +178,6 @@ jobs:
       - name: Locate APK
         run: |
 
-          echo "Searching for APK..."
-
           find . \
             -type f \
             -name "*.apk" \
@@ -230,33 +194,17 @@ jobs:
             -name "*.apk" \
             | head -1)
 
-
           if [ -z "$APK" ]; then
-
             echo "ERROR: No APK was produced."
-
             exit 1
-
           fi
 
-
-          echo "Found:"
-          echo "$APK"
-
-
           cp "$APK" \
-            "dist/Learnly-Grade8.apk"
-
+            dist/Learnly-Grade8.apk
 
           sha256sum \
-            "dist/Learnly-Grade8.apk" \
-            > "dist/Learnly-Grade8.apk.sha256"
-
-
-          echo ""
-          echo "Final APK:"
-          ls -lh \
-            "dist/Learnly-Grade8.apk"
+            dist/Learnly-Grade8.apk \
+            > dist/Learnly-Grade8.apk.sha256
 
 
       - name: Upload APK
@@ -267,7 +215,6 @@ jobs:
           name: Learnly-Grade8
 
           path: |
-
             dist/Learnly-Grade8.apk
             dist/Learnly-Grade8.apk.sha256
 
