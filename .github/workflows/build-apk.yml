@@ -3,69 +3,182 @@ name: Build Learnly-Grade8.apk
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: read
 
 jobs:
-  apk:
+  build-apk:
+
+    name: Build Learnly Grade 8 APK
+
     runs-on: ubuntu-24.04
+
     timeout-minutes: 120
+
     steps:
-      - name: Checkout
+
+      - name: Checkout Learnly
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: "3.12"
           cache: pip
 
-      - name: Install build prerequisites
+      - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git unzip zip wget curl build-essential autoconf automake libtool pkg-config libffi-dev libssl-dev
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install 'PySide6==6.10.0'
 
-      - name: Download Android SDK and NDK required by Qt for Python
+          sudo apt-get install -y \
+            git \
+            unzip \
+            zip \
+            wget \
+            curl \
+            build-essential \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            libffi-dev \
+            libssl-dev
+
+      - name: Install Python build dependencies
         run: |
-          git clone --depth 1 --branch 6.10 https://code.qt.io/pyside/pyside-setup.git "$RUNNER_TEMP/pyside-setup"
-          python "$RUNNER_TEMP/pyside-setup/tools/cross_compile_android/main.py" --download-only --skip-update --auto-accept-license
+          python -m pip install --upgrade \
+            pip \
+            setuptools \
+            wheel
 
-      - name: Download PySide6 Android wheels
+          python -m pip install \
+            "GitPython>=3.1.40"
+
+          python -m pip install \
+            "PySide6==6.10.0"
+
+      - name: Clone Qt for Python deployment tools
+        run: |
+          git clone \
+            --depth 1 \
+            --branch 6.10 \
+            https://code.qt.io/pyside/pyside-setup.git \
+            "$RUNNER_TEMP/pyside-setup"
+
+      - name: Download Android SDK and NDK
+        run: |
+          python \
+            "$RUNNER_TEMP/pyside-setup/tools/cross_compile_android/main.py" \
+            --download-only \
+            --skip-update \
+            --auto-accept-license
+
+      - name: Download Android PySide wheels
         run: |
           mkdir -p "$RUNNER_TEMP/android-wheels"
-          qtpip download PySide6 --android --arch aarch64 -d "$RUNNER_TEMP/android-wheels"
-          qtpip download Shiboken6 --android --arch aarch64 -d "$RUNNER_TEMP/android-wheels"
-          find "$RUNNER_TEMP/android-wheels" -maxdepth 1 -type f -name '*.whl' -print
 
-      - name: Build APK
-        run: |
-          PYSIDE=$(find "$RUNNER_TEMP/android-wheels" -maxdepth 1 -type f -name 'PySide6-*.whl' | head -n1)
-          SHIBOKEN=$(find "$RUNNER_TEMP/android-wheels" -maxdepth 1 -type f -iname 'shiboken6-*.whl' | head -n1)
-          test -n "$PYSIDE"
-          test -n "$SHIBOKEN"
-          pyside6-android-deploy --name 'Learnly-Grade8' --wheel-pyside="$PYSIDE" --wheel-shiboken="$SHIBOKEN" --arch=aarch64 --force
+          qtpip download \
+            PySide6 \
+            --android \
+            --arch aarch64 \
+            -d "$RUNNER_TEMP/android-wheels"
 
-      - name: Locate APK
-        shell: bash
+          qtpip download \
+            Shiboken6 \
+            --android \
+            --arch aarch64 \
+            -d "$RUNNER_TEMP/android-wheels"
+
+          echo "Android wheels:"
+          ls -lh "$RUNNER_TEMP/android-wheels"
+
+      - name: Locate Android toolchain
         run: |
-          mkdir -p dist
-          APK=$(find . -type f -name '*.apk' -print | head -n1)
-          if [ -z "$APK" ]; then
-            echo 'APK was not produced.'
-            find . -maxdepth 6 -type f | sort | tail -300
+          echo "PySide Android cache:"
+          find "$HOME/.pyside6-android-deploy" \
+            -maxdepth 4 \
+            -type d \
+            | head -100
+
+      - name: Locate PySide wheels
+        id: wheels
+        run: |
+          PYSIDE=$(find \
+            "$RUNNER_TEMP/android-wheels" \
+            -type f \
+            -name 'PySide6-*.whl' \
+            | head -1)
+
+          SHIBOKEN=$(find \
+            "$RUNNER_TEMP/android-wheels" \
+            -type f \
+            -name 'shiboken6-*.whl' \
+            | head -1)
+
+          if [ -z "$PYSIDE" ]; then
+            echo "PySide6 Android wheel not found"
             exit 1
           fi
-          cp "$APK" dist/Learnly-Grade8.apk
-          sha256sum dist/Learnly-Grade8.apk | tee dist/Learnly-Grade8.apk.sha256
+
+          if [ -z "$SHIBOKEN" ]; then
+            echo "Shiboken6 Android wheel not found"
+            exit 1
+          fi
+
+          echo "pyside=$PYSIDE" >> "$GITHUB_OUTPUT"
+          echo "shiboken=$SHIBOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Build Android APK
+        working-directory: .
+        run: |
+          pyside6-android-deploy \
+            --name "Learnly-Grade8" \
+            --wheel-pyside="${{ steps.wheels.outputs.pyside }}" \
+            --wheel-shiboken="${{ steps.wheels.outputs.shiboken }}" \
+            --arch=aarch64 \
+            --force \
+            --verbose
+
+      - name: Locate APK
+        run: |
+          echo "Searching for APK..."
+
+          find . \
+            -type f \
+            -name "*.apk" \
+            -print
+
+      - name: Prepare Learnly APK
+        run: |
+          mkdir -p dist
+
+          APK=$(find . \
+            -type f \
+            -name "*.apk" \
+            | head -1)
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK was not produced."
+            exit 1
+          fi
+
+          cp "$APK" \
+            "dist/Learnly-Grade8.apk"
+
+          sha256sum \
+            "dist/Learnly-Grade8.apk" \
+            > "dist/Learnly-Grade8.apk.sha256"
+
+          ls -lh dist/
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Learnly-Grade8
-          path: dist/
-          if-no-files-found: error
+          path: |
+            dist/Learnly-Grade8.apk
+            dist/Learnly-Grade8.apk.sha256
           retention-days: 30
