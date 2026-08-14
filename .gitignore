@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+buildozer/
+android-build/
+.gradle/
+*.apk
+*.aab
+data/students/*.json
+data/papers/*.json
+data/exports/*
