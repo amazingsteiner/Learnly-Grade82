@@ -1,0 +1,31 @@
+{
+  "title": "Numeric Patterns",
+  "what": "Numeric Patterns is a Grade 8 mathematics topic.",
+  "why": "Builds calculation, reasoning and problem-solving skills.",
+  "key_vocabulary": [
+    "Sequences",
+    "Rules and next term"
+  ],
+  "core_concept": "Understand the definitions, rules and relationships before applying a method.",
+  "rules": [
+    "Write each step clearly.",
+    "Check units and signs.",
+    "Estimate or verify the answer when possible."
+  ],
+  "steps": [
+    "Understand the question",
+    "Identify what is known",
+    "Identify what is required",
+    "Choose a method or formula",
+    "Calculate",
+    "Check",
+    "Try a similar question"
+  ],
+  "worked_example": "Use the rules of Numeric Patterns on a simple example, then verify the result.",
+  "common_mistakes": [
+    "Skipping steps",
+    "Mixing signs or units",
+    "Giving an answer without checking"
+  ],
+  "memory_trick": "Explain the rule in your own words, then practise it."
+}
