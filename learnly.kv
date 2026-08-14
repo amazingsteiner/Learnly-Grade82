@@ -1,0 +1,103 @@
+
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+<NavBar@BoxLayout>:
+    size_hint_y: None
+    height: dp(54)
+    spacing: dp(4)
+    Button: text:"Home"; on_release: app.root.current="home"
+    Button: text:"Learn"; on_release: app.root.current="learn"
+    Button: text:"Practice"; on_release: app.root.current="practice"
+    Button: text:"Papers"; on_release: app.root.current="papers"
+    Button: text:"Labs"; on_release: app.root.current="labs"
+
+<RootScreen@Screen>:
+
+ScreenManager:
+    LoginScreen:
+    HomeScreen:
+    LearnScreen:
+    PracticeScreen:
+    PapersScreen:
+    LabScreen:
+
+<LoginScreen>:
+    name:"login"
+    BoxLayout:
+        orientation:"vertical"; padding:dp(24); spacing:dp(16)
+        Label: text:"LEARNLY"; font_size:sp(32); size_hint_y:None; height:dp(60)
+        Label: text:"Grade 8 Mathematics"; font_size:sp(20); size_hint_y:None; height:dp(40)
+        Widget:
+        TextInput:
+            id:code; hint_text:"Student code"; multiline:False; size_hint_y:None; height:dp(50)
+        Button:
+            text:"ENTER LEARNLY"; size_hint_y:None; height:dp(52); on_release: root.login()
+        Widget:
+
+<HomeScreen>:
+    name:"home"
+    BoxLayout:
+        orientation:"vertical"; padding:dp(14); spacing:dp(10)
+        Label: id:welcome; text:"Welcome"; font_size:sp(26); size_hint_y:None; height:dp(50)
+        Label: id:stats; text:""; size_hint_y:None; height:dp(35)
+        ScrollView:
+            GridLayout:
+                cols:1; spacing:dp(10); size_hint_y:None; padding:dp(4)
+                height:self.minimum_height
+                Button: text:"LEARN"; height:dp(55); size_hint_y:None; on_release: app.root.current="learn"
+                Button: text:"PRACTICE"; height:dp(55); size_hint_y:None; on_release: app.root.current="practice"
+                Button: text:"PAPERS"; height:dp(55); size_hint_y:None; on_release: app.root.current="papers"
+                Button: text:"MATHS LABS"; height:dp(55); size_hint_y:None; on_release: app.root.current="labs"
+        NavBar:
+
+<LearnScreen>:
+    name:"learn"
+    BoxLayout:
+        orientation:"vertical"; padding:dp(10); spacing:dp(8)
+        Spinner: id:topic_spinner; text:"Whole Numbers"; size_hint_y:None; height:dp(48); on_text: root.changed(self.text)
+        ScrollView:
+            Label: id:note; text:""; markup:True; text_size:self.width,None; size_hint_y:None; height:self.texture_size[1]; halign:"left"; valign:"top"; padding:dp(8)
+        NavBar:
+
+<PracticeScreen>:
+    name:"practice"
+    BoxLayout:
+        orientation:"vertical"; padding:dp(10); spacing:dp(8)
+        BoxLayout: size_hint_y:None; height:dp(48); spacing:dp(6)
+            Spinner: id:topic; text:"Whole Numbers"
+            Spinner: id:diff; text:"Standard"; values:["Foundation","Standard","Advanced","Elite"]
+        Label: id:feedback; text:"Choose a topic and press Start"; size_hint_y:None; height:dp(36)
+        Label: id:question; text:""; font_size:sp(22); text_size:self.width,None
+        TextInput: id:answer; hint_text:"Your answer"; multiline:False; size_hint_y:None; height:dp(50)
+        BoxLayout: size_hint_y:None; height:dp(48); spacing:dp(6)
+            Button: text:"START"; on_release: root.start()
+            Button: text:"SUBMIT"; on_release: root.submit()
+            Button: text:"HINT"; on_release: root.hint()
+        ScrollView:
+            Label: id:hint; text:""; text_size:self.width,None; size_hint_y:None; height:self.texture_size[1]
+        NavBar:
+
+<PapersScreen>:
+    name:"papers"
+    BoxLayout:
+        orientation:"vertical"; padding:dp(10); spacing:dp(8)
+        BoxLayout: size_hint_y:None; height:dp(48); spacing:dp(6)
+            Spinner: id:topic; text:"Mixed"; values:["Mixed"] + __import__('engine.question_engine',fromlist=['TOPICS']).TOPICS
+            TextInput: id:num; text:"5"; input_filter:"int"; multiline:False
+        BoxLayout: size_hint_y:None; height:dp(48); spacing:dp(6)
+            Button: text:"GENERATE PAPER"; on_release: root.generate()
+            Button: text:"VIEW MEMO"; on_release: root.memo()
+        ScrollView:
+            Label: id:paper; text:""; text_size:self.width,None; size_hint_y:None; height:self.texture_size[1]
+        NavBar:
+
+<LabScreen>:
+    name:"labs"
+    BoxLayout:
+        orientation:"vertical"; padding:dp(10); spacing:dp(8)
+        Label: text:"DATA HANDLING LAB"; font_size:sp(24); size_hint_y:None; height:dp(45)
+        TextInput: id:values; hint_text:"Enter numbers: 4 7 7 9 12"; multiline:False; size_hint_y:None; height:dp(50)
+        Button: text:"CALCULATE STATISTICS"; size_hint_y:None; height:dp(50); on_release: root.calculate()
+        Label: id:result; text:""; text_size:self.width,None
+        Label: text:"Probability Lab • Geometry Lab • simulations and dynamic diagrams are structured for expansion in the next engine layer."; text_size:self.width,None
+        NavBar:
