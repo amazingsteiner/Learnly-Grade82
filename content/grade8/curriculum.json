@@ -1,0 +1,29 @@
+{
+  "grade": 8,
+  "subject": "Mathematics",
+  "country": "South Africa",
+  "note": "Grade 8 topic structure sourced from the supplied development brief; verify exact CAPS/ATP wording before production release.",
+  "terms": {
+    "1": [
+      "Whole Numbers",
+      "Integers",
+      "Exponents",
+      "Numeric Patterns"
+    ],
+    "2": [
+      "Algebraic Expressions",
+      "Algebraic Equations",
+      "Geometry of Straight Lines"
+    ],
+    "3": [
+      "Pythagoras",
+      "Area & Perimeter",
+      "Financial Mathematics",
+      "Transformations"
+    ],
+    "4": [
+      "Data Handling",
+      "Probability"
+    ]
+  }
+}
