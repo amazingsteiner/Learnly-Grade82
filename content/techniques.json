@@ -1,0 +1,23 @@
+{
+  "mental_maths": {
+    "multiplication": [
+      "x5 = x10 / 2",
+      "x25 = x100 / 4",
+      "x50 = x100 / 2",
+      "x9 = x10 - original"
+    ],
+    "percentages": [
+      "10% is divide by 10",
+      "5% is half of 10%",
+      "1% is divide by 100",
+      "25% is one quarter"
+    ]
+  },
+  "exponents": {
+    "same_base_multiplication": "Add exponents.",
+    "same_base_division": "Subtract exponents.",
+    "power_of_power": "Multiply exponents.",
+    "zero_exponent": "A non-zero base to power zero equals 1.",
+    "negative_exponent": "A negative exponent indicates a reciprocal."
+  }
+}
