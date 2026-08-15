@@ -17,13 +17,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -33,48 +33,83 @@ jobs:
       - name: Install Android SDK and NDK
         shell: bash
         run: |
-          set -e
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
+          set -euo pipefail
+
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          CMDLINE_TOOLS="$SDK/cmdline-tools/16.0/bin"
+          MODERN_SDKMANAGER="$CMDLINE_TOOLS/sdkmanager"
+
+          test -x "$MODERN_SDKMANAGER"
+
+          yes | "$MODERN_SDKMANAGER" --licenses >/dev/null || true
+          "$MODERN_SDKMANAGER" \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0" \
             "ndk;28.2.13676358"
 
-          SDK="${ANDROID_SDK_ROOT}"
-          NDK="${SDK}/ndk/28.2.13676358"
+          # python-for-android still probes the historical
+          # $ANDROID_SDK_ROOT/tools/bin/sdkmanager path. Modern Android
+          # SDKs intentionally no longer ship that path and the old
+          # launcher crashes on Java 17 because JAXB is absent.
+          # Provide a compatibility wrapper instead of installing the
+          # obsolete Android SDK Tools package.
+          mkdir -p "$SDK/tools/bin"
+          cat > "$SDK/tools/bin/sdkmanager" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec "$MODERN_SDKMANAGER" "$@"
+EOF
+          chmod +x "$SDK/tools/bin/sdkmanager"
+
+          # Keep modern tools first, but also expose the compatibility path.
+          echo "$SDK/tools/bin" >> "$GITHUB_PATH"
+          echo "$CMDLINE_TOOLS" >> "$GITHUB_PATH"
+
+          NDK="$SDK/ndk/28.2.13676358"
           test -d "$SDK"
           test -d "$NDK"
+          test -x "$SDK/platform-tools/adb"
+          test -x "$SDK/build-tools/35.0.0/aapt2"
+          test -x "$NDK/ndk-build"
+          test -x "$SDK/tools/bin/sdkmanager"
 
           {
             echo "ANDROID_HOME=$SDK"
             echo "ANDROID_SDK_ROOT=$SDK"
             echo "ANDROID_NDK_HOME=$NDK"
             echo "ANDROID_NDK_ROOT=$NDK"
+            echo "ANDROID_NDK=$NDK"
           } >> "$GITHUB_ENV"
 
           echo "Android SDK: $SDK"
           echo "Android NDK: $NDK"
+          echo "Compatibility sdkmanager: $SDK/tools/bin/sdkmanager"
+          "$SDK/tools/bin/sdkmanager" --version
 
       - name: Install Buildozer toolchain
         shell: bash
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install "buildozer>=1.5.0" "Cython==0.29.37"
+          python -m pip install "buildozer>=1.6.0" "Cython==0.29.37"
 
       - name: Verify project and Android toolchain
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           test -f main.py
           test -f buildozer.spec
           python -m py_compile main.py
           test -x "$ANDROID_SDK_ROOT/platform-tools/adb"
           test -x "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2"
           test -x "$ANDROID_NDK_HOME/ndk-build"
-          yes | sdkmanager --licenses >/dev/null || true
+          test -x "$ANDROID_SDK_ROOT/tools/bin/sdkmanager"
+          yes | "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" --licenses >/dev/null || true
           echo "SDK: $ANDROID_SDK_ROOT"
           echo "NDK: $ANDROID_NDK_HOME"
+          echo "sdkmanager: $ANDROID_SDK_ROOT/tools/bin/sdkmanager"
+          "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" --version
           grep -n "requirements\|android.api\|android.minapi" buildozer.spec
 
       - name: Build debug APK with preinstalled SDK/NDK
@@ -82,7 +117,7 @@ jobs:
         env:
           BUILDOZER_WARN_ON_ROOT: "1"
         run: |
-          set -e
+          set -euo pipefail
           buildozer -v android debug
 
       - name: Show generated APKs
