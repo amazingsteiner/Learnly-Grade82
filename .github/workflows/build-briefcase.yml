@@ -1,0 +1,104 @@
+name: Learnly Grade 8 - Briefcase Android
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Learnly APK with Briefcase + Gradle
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Learnly
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Briefcase
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "briefcase==0.3.25"
+
+      - name: Verify source without Kivy
+        run: |
+          set -e
+          test -f pyproject.toml
+          test -f learnly.py
+          test -d engine
+          test -d content
+          ! grep -R "from kivy\|import kivy\|PySide6" learnly.py engine || true
+          python -m py_compile learnly.py
+
+      - name: Create Android Gradle project
+        env:
+          BRIEFCASE_NO_INTERACTION: "1"
+        run: |
+          set -e
+          unset ANDROID_HOME || true
+          unset ANDROID_SDK_ROOT || true
+          briefcase create android
+
+      - name: Update Android project
+        env:
+          BRIEFCASE_NO_INTERACTION: "1"
+        run: |
+          set -e
+          briefcase update android
+
+      - name: Build Android app
+        env:
+          BRIEFCASE_NO_INTERACTION: "1"
+        run: |
+          set -e
+          briefcase build android -v
+
+      - name: Package debug APK
+        env:
+          BRIEFCASE_NO_INTERACTION: "1"
+        run: |
+          set -e
+          briefcase package android -p debug-apk -v
+
+      - name: Locate APK
+        id: apk
+        run: |
+          set -e
+          APK=$(find dist -type f -name "*.apk" -print -quit)
+          test -n "$APK"
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+          echo "Found APK: $APK"
+
+      - name: Upload Learnly APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: learnly-grade8-briefcase-apk
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Briefcase logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: learnly-briefcase-build-logs
+          path: |
+            build/**
+            logs/**
+            dist/**
+          if-no-files-found: ignore
+          retention-days: 7
