@@ -17,13 +17,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -48,21 +48,14 @@ jobs:
             "build-tools;35.0.0" \
             "ndk;28.2.13676358"
 
-          # python-for-android still probes the historical
-          # $ANDROID_SDK_ROOT/tools/bin/sdkmanager path. Modern Android
-          # SDKs intentionally no longer ship that path and the old
-          # launcher crashes on Java 17 because JAXB is absent.
-          # Provide a compatibility wrapper instead of installing the
-          # obsolete Android SDK Tools package.
+          # Current python-for-android still probes the historical
+          # $ANDROID_SDK_ROOT/tools/bin/sdkmanager location.
+          # Modern Android SDKs do not ship that legacy launcher, while
+          # the old launcher fails on Java 17 because JAXB is absent.
+          # Link the legacy path directly to the modern sdkmanager.
           mkdir -p "$SDK/tools/bin"
-          cat > "$SDK/tools/bin/sdkmanager" <<EOF
-#!/usr/bin/env bash
-set -euo pipefail
-exec "$MODERN_SDKMANAGER" "$@"
-EOF
-          chmod +x "$SDK/tools/bin/sdkmanager"
+          ln -sfn "$MODERN_SDKMANAGER" "$SDK/tools/bin/sdkmanager"
 
-          # Keep modern tools first, but also expose the compatibility path.
           echo "$SDK/tools/bin" >> "$GITHUB_PATH"
           echo "$CMDLINE_TOOLS" >> "$GITHUB_PATH"
 
@@ -73,6 +66,7 @@ EOF
           test -x "$SDK/build-tools/35.0.0/aapt2"
           test -x "$NDK/ndk-build"
           test -x "$SDK/tools/bin/sdkmanager"
+          test -L "$SDK/tools/bin/sdkmanager"
 
           {
             echo "ANDROID_HOME=$SDK"
@@ -84,7 +78,7 @@ EOF
 
           echo "Android SDK: $SDK"
           echo "Android NDK: $NDK"
-          echo "Compatibility sdkmanager: $SDK/tools/bin/sdkmanager"
+          echo "Legacy sdkmanager path: $SDK/tools/bin/sdkmanager"
           "$SDK/tools/bin/sdkmanager" --version
 
       - name: Install Buildozer toolchain
@@ -105,10 +99,10 @@ EOF
           test -x "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2"
           test -x "$ANDROID_NDK_HOME/ndk-build"
           test -x "$ANDROID_SDK_ROOT/tools/bin/sdkmanager"
-          yes | "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" --licenses >/dev/null || true
+          test -L "$ANDROID_SDK_ROOT/tools/bin/sdkmanager"
           echo "SDK: $ANDROID_SDK_ROOT"
           echo "NDK: $ANDROID_NDK_HOME"
-          echo "sdkmanager: $ANDROID_SDK_ROOT/tools/bin/sdkmanager"
+          echo "Legacy sdkmanager: $ANDROID_SDK_ROOT/tools/bin/sdkmanager"
           "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" --version
           grep -n "requirements\|android.api\|android.minapi" buildozer.spec
 
