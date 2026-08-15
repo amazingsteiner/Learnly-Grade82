@@ -5,10 +5,10 @@ package.domain = org.elitesacademy
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json,txt
 version = 1.0
-requirements = python3,pyside6
 orientation = portrait
 fullscreen = 0
 android.permissions = INTERNET
+android.archs = arm64-v8a
 
 [buildozer]
 log_level = 2
