@@ -1,0 +1,25 @@
+[build-system]
+requires = ["briefcase"]
+build-backend = "briefcase.build"
+
+[tool.briefcase]
+project_name = "Learnly Grade 8"
+bundle = "org.learnly"
+version = "1.0.0"
+url = "https://github.com/amazingsteiner/Learnly-Grade82"
+license = "MIT"
+author = "Learnly"
+author_email = "learnly@example.com"
+
+[tool.briefcase.app.learnly]
+formal_name = "Learnly Grade 8"
+description = "Offline CAPS Grade 8 mathematics learning app"
+long_description = "Learnly Grade 8 is an offline mathematics learning application with adaptive practice, mastery tracking, local paper generation, Grade 8 curriculum content, and developer testing tools."
+icon = ""
+sources = ["learnly.py", "engine", "content"]
+requires = ["toga==0.5.3"]
+
+[tool.briefcase.app.learnly.android]
+requires = ["toga==0.5.3"]
+android_abis = ["arm64-v8a"]
+version_code = 100
