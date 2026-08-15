@@ -23,15 +23,18 @@ android.archs = arm64-v8a,armeabi-v7a
 android.api = 35
 android.minapi = 23
 
+# GitHub Actions pre-installs these paths. Buildozer must reuse them
+# instead of creating a second SDK under ~/.buildozer.
+android.sdk_path = /usr/local/lib/android/sdk
+android.ndk_path = /usr/local/lib/android/sdk/ndk/28.2.13676358
+
 # Keep the application offline.
 # No INTERNET permission is required by the Learnly V1 engine.
 android.allow_backup = 1
 android.debuggable = 1
 
-# Optional Android name shown by the launcher.
 presplash.filename =
 
 [buildozer]
-
 log_level = 2
 warn_on_root = 1
