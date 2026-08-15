@@ -1,15 +1,37 @@
 [app]
-title = Learnly
-package.name = learnly
-package.domain = org.elitesacademy
+
+# Learnly Grade 8 — Offline Kivy V1
+
+title = Learnly Grade 8
+package.name = learnlygrade8
+package.domain = org.learnly
+
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,json,txt
-version = 1.0
+source.include_exts = py,png,jpg,jpeg,kv,atlas,json,txt
+
+version = 1.0.0
 orientation = portrait
 fullscreen = 0
-android.permissions = INTERNET
-android.archs = arm64-v8a
+
+# Kivy is handled by python-for-android's maintained recipe.
+requirements = python3,kivy==2.3.1
+
+# ARM Android devices.
+android.archs = arm64-v8a,armeabi-v7a
+
+# Android versions.
+android.api = 35
+android.minapi = 23
+
+# Keep the application offline.
+# No INTERNET permission is required by the Learnly V1 engine.
+android.allow_backup = 1
+android.debuggable = 1
+
+# Optional Android name shown by the launcher.
+presplash.filename =
 
 [buildozer]
+
 log_level = 2
 warn_on_root = 1

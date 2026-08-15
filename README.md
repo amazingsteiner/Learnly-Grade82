@@ -1,21 +1,40 @@
-# Learnly Grade 8 — Kivy Android Build
+# Learnly Grade 8 — Kivy Offline V1
 
-A Kivy/Buildozer Android version of Learnly, based on the supplied Learnly Grade 8 development brief.
+This is the Kivy rewrite of the supplied Learnly Grade 8 project.
 
-## Current build
-- Student-code login with local JSON profile
-- Grade 8 curriculum layer
-- Learn modules loaded from JSON
-- Topic/difficulty practice generator
-- Hints, explanations, XP and mastery
-- Paper generator + memo viewer
-- Data Handling statistics lab
-- Responsive portrait Kivy UI
-- GitHub Actions workflow that builds a debug APK
+## What changed
+- Removed the PySide6 UI layer.
+- Replaced the Qt timer with Kivy Clock.
+- Preserved the existing pure-Python learning engines and Grade 8 content.
+- Added a Kivy-native offline UI.
+- Preserved the existing local JSON persistence model for student/paper data.
+- Added the offline credit wallet and transaction ledger.
+- Added Developer Mode with simulated credit purchases for Pydroid testing.
+- Added a Buildozer configuration for Android APK generation.
 
-## Android build
-Push this repository to GitHub. Then open **Actions → Build Learnly Grade 8 APK → Run workflow**.
-The generated APK is uploaded as an Actions artifact named `Learnly-Grade8-APK`.
+## Run in Pydroid 3
+From the project directory:
 
-## Important
-The supplied brief states that exact CAPS/ATP wording should be verified before production release. This project preserves that caveat and does not claim independent curriculum verification.
+    pip install kivy
+    python main.py
+
+## Developer Mode
+Settings → Enable Developer Mode → code:
+
+    DEV-2026
+
+This is a local simulation only. No payment gateway is contacted.
+
+## Build APK
+On Linux/WSL/Cloud build machine:
+
+    pip install buildozer
+    buildozer android debug
+
+The APK will be placed in `bin/`.
+
+## Offline architecture
+
+Content → Question Engine → Adaptive/Mastery → Paper Engine → Local Student Data
+
+No cloud API is required for V1.

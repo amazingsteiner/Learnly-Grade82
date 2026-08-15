@@ -1,87 +1,101 @@
-name: Build APK (official PySide6-for-Android pipeline)
+name: Learnly Grade 8 - Build APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
-env:
-  PYSIDE_VERSION: "6.11.1"
-  PY_TAG: "cp311-cp311"
-  ARCH: "aarch64"
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17 (required by Qt's Android toolchain)
+    steps:
+      - name: Checkout Learnly
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: "17"
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install NDK r27.x and required SDK packages
+      - name: Install Android SDK / NDK packages
+        shell: bash
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          NDK_PKG=$(sdkmanager --list 2>/dev/null | grep -oE 'ndk;27\.[0-9.]+' | head -n1)
-          echo "Using NDK package: $NDK_PKG"
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "$NDK_PKG"
-          NDK_DIR=$(find "$ANDROID_SDK_ROOT/ndk" -maxdepth 1 -type d -name "27.*" | head -n1)
-          echo "ANDROID_NDK_HOME=$NDK_DIR" >> "$GITHUB_ENV"
-          echo "Resolved NDK dir: $NDK_DIR"
+          yes | sdkmanager --licenses >/dev/null || true
 
-      - name: Install pyside6-android-deploy tooling
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.2.12479018"
+
+          echo "ANDROID_HOME=${ANDROID_SDK_ROOT}" >> "$GITHUB_ENV"
+
+          echo "Android SDK: ${ANDROID_SDK_ROOT}"
+          echo "NDK:"
+          find "${ANDROID_SDK_ROOT}/ndk" -maxdepth 1 -mindepth 1 -type d -print || true
+
+      - name: Install Buildozer toolchain
+        shell: bash
         run: |
-          python -m pip install --upgrade pip
-          pip install "pyside6==${{ env.PYSIDE_VERSION }}" buildozer cython
+          python -m pip install --upgrade pip setuptools wheel
 
-      - name: Download official Qt-for-Android wheels (PySide6 + shiboken6)
+          # Buildozer/python-for-android is sensitive to Cython versions.
+          python -m pip install \
+            "buildozer>=1.5.0" \
+            "Cython==0.29.37"
+
+      - name: Verify project
+        shell: bash
         run: |
-          mkdir -p wheels
-          BASE="https://download.qt.io/official_releases/QtForPython"
-          curl -fL "$BASE/pyside6/pyside6-${{ env.PYSIDE_VERSION }}-${{ env.PYSIDE_VERSION }}-${{ env.PY_TAG }}-android_${{ env.ARCH }}.whl" -o wheels/pyside6.whl
-          curl -fL "$BASE/shiboken6/shiboken6-${{ env.PYSIDE_VERSION }}-${{ env.PYSIDE_VERSION }}-${{ env.PY_TAG }}-android_${{ env.ARCH }}.whl" -o wheels/shiboken6.whl
-          ls -la wheels
+          test -f main.py
+          test -f buildozer.spec
+          grep -n "requirements" buildozer.spec
+          python -m py_compile main.py
 
-      - name: Build APK with pyside6-android-deploy
+      - name: Build debug APK
+        shell: bash
+        env:
+          BUILDOZER_WARN_ON_ROOT: "1"
         run: |
-          pyside6-android-deploy \
-            --wheel-pyside="$(pwd)/wheels/pyside6.whl" \
-            --wheel-shiboken="$(pwd)/wheels/shiboken6.whl" \
-            --name=main \
-            --ndk-path="$ANDROID_NDK_HOME" \
-            --sdk-path="$ANDROID_SDK_ROOT"
+          buildozer -v android debug
 
-      - name: Locate built APK
-        id: findapk
+      - name: Show generated APKs
+        shell: bash
         run: |
-          APK_PATH=$(find . -name "*.apk" -print -quit)
-          echo "Found APK at: $APK_PATH"
-          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "APK files:"
+          find bin -type f -name "*.apk" -print
 
-      - name: Upload APK artifact
-        if: steps.findapk.outputs.apk_path != ''
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: learnly-apk
-          path: ${{ steps.findapk.outputs.apk_path }}
+          name: learnly-grade8-apk
+          path: bin/*.apk
+          if-no-files-found: error
+          retention-days: 14
 
-      - name: Upload build logs on failure (for debugging)
+      - name: Upload Buildozer logs if build fails
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs
+          name: learnly-build-logs
           path: |
-            .buildozer/**/build.log
-            *.log
+            .buildozer/**
+            buildozer.spec
           if-no-files-found: ignore
+          retention-days: 7

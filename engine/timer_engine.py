@@ -1,67 +1,38 @@
-from PySide6.QtCore import QTimer, Signal, QObject
+from kivy.clock import Clock
 
-
-class CountdownTimer(QObject):
-    tick = Signal(int)
-    finished = Signal()
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self._step)
+class CountdownTimer:
+    def __init__(self, on_tick=None, on_finished=None):
         self.remaining = 0
-
+        self.event = None
+        self.on_tick = on_tick
+        self.on_finished = on_finished
     def start(self, seconds):
-        self.remaining = max(0, int(seconds))
-        self.tick.emit(self.remaining)
-        self.timer.start(1000)
-
+        self.stop(); self.remaining=max(0,int(seconds)); self._emit(); self.event=Clock.schedule_interval(self._step,1)
     def pause(self):
-        self.timer.stop()
-
+        if self.event: self.event.cancel(); self.event=None
     def resume(self):
-        self.timer.start(1000)
-
+        if self.remaining>0 and not self.event: self.event=Clock.schedule_interval(self._step,1)
     def reset(self, seconds=0):
-        self.timer.stop()
-        self.remaining = seconds
-        self.tick.emit(self.remaining)
-
+        self.stop(); self.remaining=max(0,int(seconds)); self._emit()
     def stop(self):
-        self.timer.stop()
+        if self.event: self.event.cancel(); self.event=None
+    def _emit(self):
+        if self.on_tick: self.on_tick(self.remaining)
+    def _step(self, dt):
+        self.remaining-=1; self._emit()
+        if self.remaining<=0:
+            self.stop()
+            if self.on_finished: self.on_finished()
 
-    def _step(self):
-        self.remaining -= 1
-        self.tick.emit(max(0, self.remaining))
-        if self.remaining <= 0:
-            self.timer.stop()
-            self.finished.emit()
-
-
-class Stopwatch(QObject):
-    tick = Signal(int)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self._step)
-        self.elapsed = 0
-
-    def start(self):
-        self.elapsed = 0
-        self.timer.start(1000)
-
+class Stopwatch:
+    def __init__(self, on_tick=None):
+        self.elapsed=0; self.event=None; self.on_tick=on_tick
+    def start(self): self.stop(); self.elapsed=0; self._emit(); self.event=Clock.schedule_interval(self._step,1)
     def pause(self):
-        self.timer.stop()
-
+        if self.event: self.event.cancel(); self.event=None
     def resume(self):
-        self.timer.start(1000)
-
-    def reset(self):
-        self.timer.stop()
-        self.elapsed = 0
-        self.tick.emit(0)
-
-    def _step(self):
-        self.elapsed += 1
-        self.tick.emit(self.elapsed)
+        if not self.event: self.event=Clock.schedule_interval(self._step,1)
+    def reset(self): self.stop(); self.elapsed=0; self._emit()
+    def _emit(self):
+        if self.on_tick: self.on_tick(self.elapsed)
+    def _step(self,dt): self.elapsed+=1; self._emit()

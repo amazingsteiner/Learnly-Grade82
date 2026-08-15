@@ -1,6 +1,16 @@
+# Learnly Android build output
 .buildozer/
 bin/
+build/
+dist/
+
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+
+# IDE files
 .idea/
 .vscode/
+
+# macOS
+.DS_Store
