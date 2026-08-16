@@ -1,90 +1,274 @@
-import sys, json, random, math
+import json, random, re
 from pathlib import Path
 from datetime import datetime
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication,QMainWindow,QWidget,QVBoxLayout,QLabel,QPushButton,QLineEdit,QMessageBox,QStackedWidget,QComboBox,QSpinBox,QProgressBar
-ROOT=Path(__file__).resolve().parent; DATA=ROOT/'data'; STUDENTS=DATA/'students'; PAPERS=DATA/'papers'; STUDENTS.mkdir(parents=True,exist_ok=True); PAPERS.mkdir(parents=True,exist_ok=True)
-ACCESS='children of the sun'; DEV_MODE=True
-TOPICS=['Whole Numbers','Integers','Exponents','Patterns','Algebraic Expressions','Algebraic Equations','Geometry','Pythagoras','Area & Perimeter','Financial Maths','Transformations','Data Handling','Probability']
-DEFAULT={'code':'','name':'','grade':8,'term':1,'xp':0,'streak':0,'daily_goal':20,'today_done':0,'mastery':{},'papers':[],'credits':1000,'credit_transactions':[],'dev_mode':False}
-def sp(c): return STUDENTS/(''.join(x for x in c.upper() if x.isalnum() or x in '_-')+'.json')
-def save(s): sp(s['code']).write_text(json.dumps(s,indent=2,ensure_ascii=False),encoding='utf-8')
-def load(c):
- s=dict(DEFAULT); p=sp(c)
- if p.exists():
-  try:s.update(json.loads(p.read_text(encoding='utf-8')))
-  except:pass
- s['code']=c.upper();s['name']=s.get('name') or s['code'];s['mastery']=dict(s.get('mastery',{}))
- for t in TOPICS:s['mastery'].setdefault(t,.5)
- save(s);return s
-def credit(s,n,k):
- if s['credits']+n<0:return False
- b=s['credits'];s['credits']+=n;s['credit_transactions'].append({'type':k,'credits':n,'before':b,'after':s['credits'],'time':datetime.now().isoformat()});save(s);return True
-class Engine:
- def q(self,t):
-  if t=='Algebraic Equations':
-   a=random.randint(2,8);x=random.randint(2,12);b=random.randint(1,12);c=a*x+b;return f'Solve: {a}x + {b} = {c}',str(x),f'{a}x={c-b}; x={x}.'
-  if t=='Exponents':
-   a=random.randint(2,5);x=random.randint(1,4);y=random.randint(1,4);return f'Simplify: {a}^{x} × {a}^{y}',f'{a}^{x+y}','Same base: add exponents.'
-  if t=='Pythagoras':return 'Right triangle legs are 3 and 4. Find c.','5','c²=a²+b².'
-  if t=='Probability':return 'A bag has 2 red and 3 blue counters. Find P(red).','2/5','Favourable outcomes ÷ total outcomes.'
-  if t=='Data Handling':
-   v=[2,4,6,8,10];return 'Find the mean: '+', '.join(map(str,v)),'6','Add and divide by 5.'
-  a=random.randint(3,12);b=random.randint(2,10);return f'Calculate: {a} × {b}',str(a*b),f'{a} × {b} = {a*b}.'
-class Login(QWidget):
- def __init__(self,a):
-  super().__init__();self.a=a;l=QVBoxLayout(self);l.addStretch();z=QLabel('LEARNLY\nGRADE 8 OFFLINE');z.setAlignment(Qt.AlignCenter);z.setStyleSheet('font-size:32px;font-weight:bold');l.addWidget(z);self.ac=QLineEdit();self.ac.setPlaceholderText('Access code');self.ac.setEchoMode(QLineEdit.Password);l.addWidget(self.ac);self.sc=QLineEdit();self.sc.setPlaceholderText('Student code');l.addWidget(self.sc);b=QPushButton('ENTER LEARNLY');b.clicked.connect(self.login);l.addWidget(b);l.addStretch()
- def login(self):
-  if self.ac.text().strip().lower()!=ACCESS:return QMessageBox.warning(self,'Access denied','Incorrect access code.')
-  if not self.sc.text().strip():return
-  self.a.student=load(self.sc.text().strip());self.a.show('home')
-class Page(QWidget):
- def __init__(self,a,title):
-  super().__init__();self.a=a;l=QVBoxLayout(self);b=QPushButton('← Home');b.clicked.connect(lambda:a.show('home'));l.addWidget(b);l.addWidget(QLabel(title));self.l=l
- def add(self,w):self.l.addWidget(w)
-class Home(Page):
- def __init__(self,a):super().__init__(a,'Learnly');self.refresh()
- def refresh(self):
-  while self.l.count():self.l.takeAt(0).widget().deleteLater()
-  s=self.a.student;self.add(QLabel(f"{s['name']}\n🪙 {s['credits']:,} Credits   ⭐ {s['xp']} XP"));p=QProgressBar();p.setRange(0,s['daily_goal']);p.setValue(min(s['today_done'],s['daily_goal']));p.setFormat(f"Daily goal {s['today_done']}/{s['daily_goal']}");self.add(p)
-  for t,n in [('📚 Learn','learn'),('🧠 Practice','practice'),('📝 Paper Generator','papers'),('📐 Maths Tools','tools'),('⚙ Settings','settings')]:b=QPushButton(t);b.clicked.connect(lambda _,n=n:self.a.show(n));self.add(b)
-  if s.get('dev_mode'):b=QPushButton('🔧 DEV STORE');b.clicked.connect(lambda:self.a.show('dev'));self.add(b)
-  elif DEV_MODE:b=QPushButton('Developer Mode');b.clicked.connect(self.enable);self.add(b)
- def enable(self):
-  if QMessageBox.question(self,'Developer Mode','Enable developer tools?')==QMessageBox.Yes:self.a.student['dev_mode']=True;save(self.a.student);self.refresh()
-class Learn(Page):
- def __init__(self,a):super().__init__(a,'Learn');
- def showEvent(self,e):
-  for t in TOPICS:b=QPushButton(f'📖 {t} • {round(self.a.student["mastery"][t]*100)}%');b.clicked.connect(lambda _,t=t:QMessageBox.information(self,t,'Core concept, rules and worked examples are available offline.'));self.add(b)
-class Practice(Page):
- def __init__(self,a):
-  super().__init__(a,'Practice');self.e=Engine();self.mode=QComboBox();self.mode.addItems(['Recommended','Weakness','Strength','Mixed']);self.add(self.mode);self.q=QLabel();self.q.setWordWrap(True);self.add(self.q);self.inp=QLineEdit();self.inp.setPlaceholderText('Your answer');self.add(self.inp);self.f=QLabel();self.f.setWordWrap(True);self.add(self.f);b=QPushButton('CHECK');b.clicked.connect(self.check);self.add(b);n=QPushButton('NEXT');n.clicked.connect(self.next);self.add(n);self.next()
- def next(self):
-  m=self.a.student['mastery'];mode=self.mode.currentText().lower();t=min(m,key=m.get) if mode=='weakness' else max(m,key=m.get) if mode=='strength' else random.choice(TOPICS);self.topic=t;self.question,self.answer,self.exp=self.e.q(t);self.q.setText(t+'\n\n'+self.question);self.inp.clear();self.f.clear()
- def check(self):
-  ok=self.inp.text().strip().lower()==self.answer.lower();m=self.a.student['mastery'][self.topic];self.a.student['mastery'][self.topic]=max(0,min(1,m+(0.05 if ok else -0.03)));self.a.student['today_done']+=1;self.a.student['xp']+=10 if ok else 3;save(self.a.student);self.f.setText(('✓ Correct\n' if ok else '✗ Not quite\nAnswer: '+self.answer+'\n')+self.exp)
-class Papers(Page):
- def __init__(self,a):super().__init__(a,'Paper Generator');self.e=Engine();self.n=QSpinBox();self.n.setRange(5,50);self.n.setValue(20);self.add(self.n);b=QPushButton('GENERATE PAPER • 400 CREDITS');b.clicked.connect(self.gen);self.add(b);self.out=QLabel();self.out.setWordWrap(True);self.add(self.out)
- def gen(self):
-  s=self.a.student
-  if not credit(s,-400,'PAPER_GENERATION'):return QMessageBox.warning(self,'Credits','Not enough credits.')
-  qs=[self.e.q(random.choice(TOPICS)) for _ in range(self.n.value())];pid='P'+datetime.now().strftime('%Y%m%d%H%M%S%f');(PAPERS/(pid+'.json')).write_text(json.dumps({'id':pid,'student':s['code'],'questions':qs},indent=2),encoding='utf-8');s['papers'].append(pid);save(s);self.out.setText(f'✓ Paper generated\n{pid}\nBalance: {s["credits"]:,}\nSaved offline.')
-class Tools(Page):
- def __init__(self,a):super().__init__(a,'Maths Tools');b=QPushButton('🧮 MENTAL MATHS');b.clicked.connect(lambda:QMessageBox.information(self,'Mental Maths','×25 = ×100 ÷4\n×50 = ×100 ÷2\n×9 = ×10 − original\n10% = ÷10'));self.add(b)
-class Settings(Page):
- def __init__(self,a):super().__init__(a,'Settings');self.g=QSpinBox();self.g.setRange(1,200);self.g.setValue(a.student['daily_goal']);self.add(QLabel('Daily goal'));self.add(self.g);b=QPushButton('SAVE');b.clicked.connect(self.save);self.add(b)
- def save(self):self.a.student['daily_goal']=self.g.value();save(self.a.student);QMessageBox.information(self,'Saved','Settings saved.')
-class Dev(Page):
- def __init__(self,a):super().__init__(a,'🔧 DEVELOPER MODE');self.bal=QLabel();self.add(QLabel('OFFLINE • DEV BUILD'));self.add(self.bal);self.refresh()
- def refresh(self):
-  self.bal.setText(f'Current balance: {self.a.student["credits"]:,}')
-  for t,n in [('+1,000 Credits',1000),('+10,000 Credits',10000),('+30,000 Credits',30000),('Remove 1,000',-1000)]:b=QPushButton(t);b.clicked.connect(lambda _,n=n:self.change(n));self.add(b)
- def change(self,n):
-  if credit(self.a.student,n,'DEV_PURCHASE' if n>0 else 'DEV_ADJUST'):self.bal.setText(f'Current balance: {self.a.student["credits"]:,}')
-class Learnly(QMainWindow):
- def __init__(self):
-  super().__init__();self.setWindowTitle('Learnly Grade 8');self.resize(430,800);self.student=None;self.stack=QStackedWidget();self.setCentralWidget(self.stack);self.stack.addWidget(Login(self));self.screens={};self.extra=[];self.setStyleSheet('QWidget{font-size:16px} QPushButton{min-height:48px;padding:8px} QLineEdit,QComboBox,QSpinBox{min-height:42px}')
- def show(self,n):
-  if n not in self.screens:self.screens[n]={'home':Home,'learn':Learn,'practice':Practice,'papers':Papers,'tools':Tools,'settings':Settings,'dev':Dev}[n](self);self.stack.addWidget(self.screens[n])
-  w=self.screens[n];self.stack.setCurrentWidget(w);w.refresh() if hasattr(w,'refresh') else None
-if __name__=='__main__':app=QApplication(sys.argv);w=Learnly();w.show();sys.exit(app.exec())
+
+from kivy.app import App
+from kivy.clock import Clock
+from kivy.metrics import dp, sp
+from kivy.properties import StringProperty
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.label import Label
+from kivy.uix.progressbar import ProgressBar
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.spinner import Spinner
+from kivy.uix.textinput import TextInput
+from kivy.uix.widget import Widget
+
+from engine.question_engine import QuestionEngine
+
+ROOT = Path(__file__).resolve().parent
+CONTENT = ROOT / "content"
+DATA = Path(App.get_running_app().user_data_dir) if App.get_running_app() else ROOT / "data"
+
+CURRICULUM_FILE = CONTENT / "curriculum" / "grade_map.json"
+NOTES_FILE = CONTENT / "notes" / "grade8_notes.json"
+
+
+def load_json(path, default):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
+
+
+def curriculum():
+    return load_json(CURRICULUM_FILE, {"grades": {}})
+
+
+def notes_pack():
+    return load_json(NOTES_FILE, {})
+
+
+def safe_code(code):
+    return "".join(c for c in code.upper() if c.isalnum() or c in "_-" ) or "STUDENT"
+
+
+class LearnButton(Button):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.size_hint_y = None
+        self.height = dp(52)
+        self.font_size = sp(16)
+        self.background_normal = ""
+        self.background_color = (0.12, 0.27, 0.45, 1)
+
+
+class NumericKeyboard(GridLayout):
+    def __init__(self, target, **kwargs):
+        super().__init__(**kwargs)
+        self.cols = 4
+        self.spacing = dp(5)
+        self.size_hint_y = None
+        self.height = dp(190)
+        self.target = target
+        keys = ["1","2","3","←","4","5","6","C","7","8","9","−","0",".","/","+"]
+        for key in keys:
+            b = Button(text=key, font_size=sp(18), background_normal="", background_color=(0.18,0.22,0.28,1))
+            b.bind(on_release=lambda btn: self.press(btn.text))
+            self.add_widget(b)
+
+    def press(self, key):
+        if key == "C":
+            self.target.text = ""
+        elif key == "←":
+            self.target.text = self.target.text[:-1]
+        else:
+            self.target.insert_text(key.replace("−", "-"))
+
+
+class Base(Screen):
+    title = StringProperty("")
+    def shell(self, title, body, back=True):
+        root = BoxLayout(orientation="vertical", padding=dp(12), spacing=dp(8))
+        header = BoxLayout(size_hint_y=None, height=dp(52), spacing=dp(8))
+        if back:
+            b = LearnButton(text="‹")
+            b.size_hint_x = None; b.width = dp(52)
+            b.bind(on_release=lambda *_: self.home())
+            header.add_widget(b)
+        header.add_widget(Label(text=title, font_size=sp(22), bold=True, halign="left", valign="middle"))
+        root.add_widget(header)
+        root.add_widget(body)
+        self.clear_widgets(); self.add_widget(root)
+
+    def home(self): self.manager.current = "home"
+
+
+class Login(Base):
+    def on_pre_enter(self, *args):
+        root = BoxLayout(orientation="vertical", padding=dp(24), spacing=dp(12))
+        root.add_widget(Widget())
+        root.add_widget(Label(text="LEARNLY", font_size=sp(36), bold=True, size_hint_y=None, height=dp(55)))
+        root.add_widget(Label(text="Mathematics • Offline • Adaptive", font_size=sp(17), size_hint_y=None, height=dp(35)))
+        self.code = TextInput(hint_text="Student code", multiline=False, size_hint_y=None, height=dp(52), font_size=sp(18))
+        root.add_widget(self.code)
+        self.grade = Spinner(text="Grade 8", values=["Grade R"] + [f"Grade {i}" for i in range(1,10)], size_hint_y=None, height=dp(52), font_size=sp(17))
+        root.add_widget(self.grade)
+        b = LearnButton(text="START LEARNLY")
+        b.bind(on_release=self.login); root.add_widget(b)
+        self.status = Label(text="", size_hint_y=None, height=dp(35))
+        root.add_widget(self.status); root.add_widget(Widget())
+        self.clear_widgets(); self.add_widget(root)
+
+    def login(self, *_):
+        if not self.code.text.strip():
+            self.status.text = "Enter your student code."
+            return
+        app = App.get_running_app()
+        app.ensure_dirs()
+        app.student = app.load_student(safe_code(self.code.text), self.grade.text)
+        self.manager.current = "home"
+
+
+class Home(Base):
+    def on_pre_enter(self, *args):
+        app = App.get_running_app(); s = app.student
+        mastery = sum(s["mastery"].values()) / max(1, len(s["mastery"]))
+        body = BoxLayout(orientation="vertical", spacing=dp(8))
+        body.add_widget(Label(text=f"Welcome, {s['name']}", font_size=sp(24), bold=True, size_hint_y=None, height=dp(42)))
+        body.add_widget(Label(text=f"{s['grade']} Mathematics   •   Level {s['level']}   •   {s['xp']} XP", font_size=sp(15), size_hint_y=None, height=dp(32)))
+        p = ProgressBar(max=1, value=mastery, size_hint_y=None, height=dp(12)); body.add_widget(p)
+        body.add_widget(Label(text=f"Overall mastery {mastery*100:.0f}%   •   Daily goal {s['today_done']}/{s['daily_goal']}", size_hint_y=None, height=dp(30)))
+        actions = [
+            ("📚 LEARN — notes, examples & tricks", "learn"),
+            ("🎯 PRACTICE — choose a topic", "practice"),
+            ("📝 PAPERS — printable worksheets", "papers"),
+            ("📊 PROGRESS — mastery & level", "progress"),
+            ("⚙ SETTINGS — adjust your learning", "settings"),
+        ]
+        scroll = ScrollView(); grid = GridLayout(cols=1, spacing=dp(8), size_hint_y=None); grid.bind(minimum_height=grid.setter("height"))
+        for text, screen in actions:
+            b=LearnButton(text=text); b.bind(on_release=lambda _, n=screen: setattr(self.manager,"current",n)); grid.add_widget(b)
+        scroll.add_widget(grid); body.add_widget(scroll)
+        self.shell("Learnly", body, back=False)
+
+
+class Learn(Base):
+    def on_pre_enter(self, *args):
+        app=App.get_running_app(); grade=app.student["grade"]; data=curriculum(); allowed=data.get("grades",{}).get(grade,{}).get("topics",[])
+        body=BoxLayout(orientation="vertical", spacing=dp(8))
+        body.add_widget(Label(text=f"Pick a topic • {grade}", font_size=sp(19), bold=True, size_hint_y=None, height=dp(36)))
+        scroll=ScrollView(); grid=GridLayout(cols=1, spacing=dp(7), size_hint_y=None); grid.bind(minimum_height=grid.setter("height"))
+        for item in allowed:
+            tid=item["id"]; mastery=app.student["mastery"].get(tid,0.5)
+            b=LearnButton(text=f"{item['name']}   {mastery*100:.0f}%")
+            b.bind(on_release=lambda _,t=tid: self.show_topic(t)); grid.add_widget(b)
+        scroll.add_widget(grid); body.add_widget(scroll); self.shell("Learn",body)
+
+    def show_topic(self, tid):
+        data=notes_pack().get(tid,{})
+        body=BoxLayout(orientation="vertical", spacing=dp(7))
+        scroll=ScrollView(); box=BoxLayout(orientation="vertical", spacing=dp(8), size_hint_y=None, padding=dp(4)); box.bind(minimum_height=box.setter("height"))
+        box.add_widget(Label(text=data.get("title",tid.replace("_"," ").title()), font_size=sp(23), bold=True, size_hint_y=None, height=dp(45)))
+        for key,label in [("note","NOTES"),("tips","TIPS & TRICKS"),("steps","HOW TO DO IT"),("example","WORKED EXAMPLE"),("mistakes","COMMON MISTAKES"),("check","QUICK CHECK")]:
+            val=data.get(key)
+            if val:
+                box.add_widget(Label(text=label,font_size=sp(17),bold=True,size_hint_y=None,height=dp(30)))
+                box.add_widget(Label(text=val,font_size=sp(14),text_size=(dp(360),None),size_hint_y=None,height=dp(110)))
+        b=LearnButton(text="PRACTICE THIS TOPIC"); b.bind(on_release=lambda *_: self.practice_topic(tid)); box.add_widget(b)
+        scroll.add_widget(box); body.add_widget(scroll); self.shell("Topic",body)
+
+    def practice_topic(self,tid):
+        App.get_running_app().practice_topic=tid; self.manager.current="practice"
+
+
+class Practice(Base):
+    def on_pre_enter(self,*args):
+        app=App.get_running_app(); grade=app.student["grade"]
+        body=BoxLayout(orientation="vertical", spacing=dp(7))
+        allowed=curriculum().get("grades",{}).get(grade,{}).get("topics",[])
+        values=[x["name"] for x in allowed]; self.map={x["name"]:x["id"] for x in allowed}
+        self.spinner=Spinner(text=(next((x["name"] for x in allowed if x["id"]==getattr(app,"practice_topic",None)),values[0] if values else "No topic")), values=values, size_hint_y=None,height=dp(50),font_size=sp(16)); body.add_widget(self.spinner)
+        self.diff=Spinner(text="Adaptive", values=["Adaptive","Foundation","Standard","Advanced"],size_hint_y=None,height=dp(50)); body.add_widget(self.diff)
+        self.question=Label(text="Choose a topic and press START",font_size=sp(19),text_size=(dp(380),None),size_hint_y=None,height=dp(90)); body.add_widget(self.question)
+        self.answer=TextInput(hint_text="Answer",multiline=False,size_hint_y=None,height=dp(52),font_size=sp(20)); body.add_widget(self.answer)
+        self.keyboard=NumericKeyboard(self.answer); body.add_widget(self.keyboard)
+        row=BoxLayout(size_hint_y=None,height=dp(52),spacing=dp(6));
+        for text,fn in [("START",self.start),("CHECK",self.check),("HINT",self.hint)]:
+            b=LearnButton(text=text); b.bind(on_release=fn); row.add_widget(b)
+        body.add_widget(row); self.feedback=Label(text="",text_size=(dp(380),None),size_hint_y=None,height=dp(90)); body.add_widget(self.feedback); self.shell("Practice",body)
+
+    def start(self,*args):
+        app=App.get_running_app(); tid=self.map.get(self.spinner.text); self.topic=tid
+        allowed=curriculum().get("grades",{}).get(app.student["grade"],{}).get("topic_ids",[])
+        if tid not in allowed:
+            self.feedback.text="This topic is not enabled for this grade. Learnly will not serve out-of-level maths."
+            return
+        d={"Foundation":1,"Standard":2,"Advanced":3}.get(self.diff.text,2)
+        if self.diff.text=="Adaptive": d=app.recommended_difficulty(tid)
+        self.q=QuestionEngine().generate(tid,d); self.question.text=self.q["question"]; self.answer.text=""; self.feedback.text=f"{self.q['topic_name']} • Level {d} • {self.q['marks']} mark(s)"
+
+    def check(self,*args):
+        if not hasattr(self,"q"): return
+        got=self.answer.text.strip().replace("−","-").replace(" ","").lower(); expected=str(self.q["answer"]).replace(" ","").lower()
+        ok=got==expected
+        app=App.get_running_app(); old=app.student["mastery"].get(self.topic,0.5); app.student["mastery"][self.topic]=max(0,min(1,old+(0.05 if ok else -0.03))); app.student["today_done"]+=1; app.student["xp"]+=10 if ok else 3; app.student["level"]=1+app.student["xp"]//500; app.save_student()
+        self.feedback.text=("✓ Correct\n" if ok else f"✗ Not quite. Answer: {self.q['answer']}\n")+self.q.get("explanation","")
+
+    def hint(self,*args):
+        if hasattr(self,"q"): self.feedback.text="💡 "+self.q.get("hint","Think about the rule for this topic.")
+
+
+class Papers(Base):
+    def on_pre_enter(self,*args):
+        app=App.get_running_app(); allowed=curriculum().get("grades",{}).get(app.student["grade"],{}).get("topics",[])
+        body=BoxLayout(orientation="vertical",spacing=dp(8)); self.topic=Spinner(text="Mixed",values=["Mixed"]+[x["name"] for x in allowed],size_hint_y=None,height=dp(50)); body.add_widget(self.topic)
+        self.count=Spinner(text="10",values=["5","10","15","20","30"],size_hint_y=None,height=dp(50)); body.add_widget(self.count)
+        b=LearnButton(text="GENERATE PNG PAPER"); b.bind(on_release=self.generate); body.add_widget(b)
+        self.out=Label(text="Each paper is rendered locally with Pillow and saved to Learnly/Papers.",text_size=(dp(380),None)); body.add_widget(self.out); self.shell("Paper Generator",body)
+
+    def generate(self,*args):
+        app=App.get_running_app(); tid=None
+        if self.topic.text!="Mixed":
+            for x in curriculum()["grades"][app.student["grade"]]["topics"]:
+                if x["name"]==self.topic.text: tid=x["id"]
+        from engine.pillow_paper import make_paper
+        path=make_paper(app.student,tid,int(self.count.text)); self.out.text=f"✓ Paper created\n{path}\nOpen it from the device Pictures/Learnly folder."
+
+
+class Progress(Base):
+    def on_pre_enter(self,*args):
+        s=App.get_running_app().student; body=BoxLayout(orientation="vertical",spacing=dp(7)); scroll=ScrollView(); grid=GridLayout(cols=1,spacing=dp(6),size_hint_y=None); grid.bind(minimum_height=grid.setter("height"))
+        for tid,val in sorted(s["mastery"].items(),key=lambda x:x[1]): grid.add_widget(Label(text=f"{tid.replace('_',' ').title()}   {val*100:.0f}%",size_hint_y=None,height=dp(34)))
+        scroll.add_widget(grid); body.add_widget(scroll); self.shell("Progress",body)
+
+
+class Settings(Base):
+    def on_pre_enter(self,*args):
+        app=App.get_running_app(); s=app.student; body=BoxLayout(orientation="vertical",spacing=dp(8)); body.add_widget(Label(text="Learning adjustments",font_size=sp(20),bold=True,size_hint_y=None,height=dp(40)))
+        self.goal=Spinner(text=str(s["daily_goal"]),values=["5","10","20","30","50"],size_hint_y=None,height=dp(50)); body.add_widget(Label(text="Daily goal")); body.add_widget(self.goal)
+        self.scale=Spinner(text=s.get("scaling","Adaptive"),values=["Adaptive","Gentle","Standard","Challenge"],size_hint_y=None,height=dp(50)); body.add_widget(Label(text="Question scaling")); body.add_widget(self.scale)
+        self.grade=Spinner(text=s["grade"],values=["Grade R"]+[f"Grade {i}" for i in range(1,10)],size_hint_y=None,height=dp(50)); body.add_widget(Label(text="Current grade")); body.add_widget(self.grade)
+        b=LearnButton(text="SAVE ADJUSTMENTS"); b.bind(on_release=self.save); body.add_widget(b); self.shell("Settings",body)
+    def save(self,*args):
+        app=App.get_running_app(); app.student["daily_goal"]=int(self.goal.text); app.student["scaling"]=self.scale.text; app.student["grade"]=self.grade.text; app.student["mastery"]={}; app.sync_curriculum(); app.save_student(); self.manager.current="home"
+
+class LearnlyApp(App):
+    def build(self):
+        self.student=None; self.practice_topic=None
+        sm=ScreenManager(); sm.add_widget(Login(name="login")); sm.add_widget(Home(name="home")); sm.add_widget(Learn(name="learn")); sm.add_widget(Practice(name="practice")); sm.add_widget(Papers(name="papers")); sm.add_widget(Progress(name="progress")); sm.add_widget(Settings(name="settings"));
+        self.title="Learnly"; return sm
+    def ensure_dirs(self):
+        self.data_dir=Path(self.user_data_dir); (self.data_dir/"students").mkdir(parents=True,exist_ok=True); (self.data_dir/"papers").mkdir(parents=True,exist_ok=True)
+    def load_student(self,code,grade):
+        self.ensure_dirs(); p=self.data_dir/"students"/(code+".json"); defaults={"code":code,"name":f"Student {code}","grade":grade,"daily_goal":20,"today_done":0,"xp":0,"level":1,"scaling":"Adaptive","mastery":{}}
+        s=defaults
+        if p.exists():
+            try:s.update(json.loads(p.read_text(encoding="utf-8")))
+            except Exception: pass
+        s["grade"]=grade; self.student=s; self.sync_curriculum(); self.save_student(); return s
+    def sync_curriculum(self):
+        grade=self.student["grade"]; topics=curriculum().get("grades",{}).get(grade,{}).get("topic_ids",[]); m=self.student.setdefault("mastery",{}); 
+        for t in topics:m.setdefault(t,0.5)
+        self.student["mastery"]={k:v for k,v in m.items() if k in topics}
+    def save_student(self):
+        if not self.student:return
+        self.ensure_dirs(); p=self.data_dir/"students"/(safe_code(self.student["code"])+".json"); p.write_text(json.dumps(self.student,indent=2,ensure_ascii=False),encoding="utf-8")
+    def recommended_difficulty(self,tid):
+        v=self.student.get("mastery",{}).get(tid,0.5)
+        return 1 if v<0.4 else 2 if v<0.7 else 3 if v<0.9 else 4
+
+if __name__ == "__main__": LearnlyApp().run()
